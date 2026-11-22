@@ -77,6 +77,11 @@ def main():
     g = S.get("sample_gap", 1); k_s = np.where(sd <= 0, bandw + g, sd + bandw + g); k_h = np.where(sd >= 0, bandw + g, -sd + bandw + g)
     Sk = cv2.remap(crop, xx - nx * k_s, yy - ny * k_s, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
     Hr = cv2.remap(crop, xx + nx * k_h, yy + ny * k_h, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+    if S.get("keep_hair"):   # where the original is already beard at the edge, keep its own strands (no dense dark rim)
+        lum = lambda im: im[..., 0] * 0.114 + im[..., 1] * 0.587 + im[..., 2] * 0.299
+        is_hair = (lum(crop) < S.get("hair_ratio", 0.72) * lum(Sk)).astype(np.float32)
+        is_hair = cv2.GaussianBlur(is_hair, (0, 0), 1.0)[..., None]
+        Hr = crop * is_hair + Hr * (1 - is_hair)
     # natural edge: soft transition + hair-tip irregularity (fine streaks along the normal direction)
     rng = np.random.default_rng(S.get("seed", 7))
     nz = rng.standard_normal((h, w)).astype(np.float32)
@@ -85,6 +90,12 @@ def main():
     soft = S.get("soft", 3.5); tips = S.get("tips", 1.6)
     d_eff = sd + tips * streak + S.get("wobble", 0.6) * blob
     a = np.clip(0.5 + d_eff / soft, 0, 1); a = a * a * (3 - 2 * a)
+    # natural density fade: a real beard thins toward its edge (single hairs, skin between them), no dark rim
+    tp = S.get("thin_px", 0)
+    if tp:
+        hairs = cv2.GaussianBlur(rng.standard_normal((h, w)).astype(np.float32), (0, 0), 0.7); hairs = (hairs - hairs.min()) / (np.ptp(hairs) + 1e-6)
+        fade = np.clip(1 - np.clip(sd, 0, None) / tp, 0, 1) * (sd > -soft)
+        a = a * (1 - S.get("thin_amt", 0.55) * fade * (1 - hairs))
     new = Sk * (1 - a[..., None]) + Hr * a[..., None]
     # a real shaved edge keeps a faint stubble shadow on the skin side: no pale halo
     sh = S.get("shadow", 0.22) * np.exp(-np.clip(-sd, 0, None) / S.get("shadow_px", 4.0)) * (sd < 0)
