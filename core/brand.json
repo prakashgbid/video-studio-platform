@@ -1,0 +1,83 @@
+{
+  "name": "Prakash Tiwari",
+  "url": "prakash-tiwari.com",
+  "tagline": "I advise CTOs on enterprise architecture, across the whole organization.",
+  "series": "ARCHITECTURE IN 60 SECONDS",
+  "font": "Helvetica Neue",
+  "width": 1080,
+  "height": 1350,
+  "fps": 30,
+  "colors": {
+    "bg": "#0B1220",
+    "ink": "#F5F7FC",
+    "muted": "#99A8C2",
+    "accent": "#3DDC97",
+    "warn": "#F2A641"
+  },
+  "headshot_source": "~/Movies/video-pipeline/assets/source/headshot_studio_2k.jpg",
+  "headshot_crop": "1700:1700:174:40",
+  "watermark": {
+    "margin_right": 30,
+    "margin_bottom": 70,
+    "opacity": 0.95,
+    "bg_alpha": 0.66,
+    "scale": 1.0
+  },
+  "voice": {
+    "provider": "elevenlabs",
+    "model_id": "eleven_multilingual_v2",
+    "voice_id": "VnoPBmwO6KFyDXAOcAaE",
+    "voice_name": "prakash-professional-30min",
+    "voice_settings": {
+      "stability": 0.5,
+      "similarity_boost": 0.85,
+      "style": 0.4,
+      "use_speaker_boost": true,
+      "speed": 1.2
+    },
+    "standard": "Professional documentary narration (chosen 2026-11-20, sample H). No audio tags, no CAPS emphasis, no dramatic ellipses; plain sentences and commas.",
+    "clean_filter": "loudnorm=I=-18:TP=-3:LRA=11,highpass=f=70:poles=2,asplit[a][b];[a]lowpass=f=160,acompressor=threshold=-34dB:ratio=6:attack=1:release=60:knee=3[lo];[b]highpass=f=160[hi];[lo][hi]amix=inputs=2:normalize=0,agate=threshold=0.018:ratio=2.2:range=0.3:attack=6:release=180:knee=3,deesser=i=0.15",
+    "previous": {
+      "model_id": "eleven_v4",
+      "note": "too dramatic; replaced 2026-11-20"
+    }
+  },
+  "intro": {
+    "video": "~/Movies/video-pipeline/assets/intro_standard.mp4",
+    "line": "Hi, I'm Prakash Tiwari. I advise CTOs on enterprise architecture, across the whole organization.",
+    "flow_project": "BASELINE - Consultant Studio (8 angles)",
+    "flow_refs": [
+      "Man seated at desk (refs/v2/02_medium_A-cam.jpg)",
+      "Me (avatar)"
+    ],
+    "flow_settings": "Video · Ingredients · 9:16 · Omni 1.2 Flash · 720p · 8s · x2 → download 1080p",
+    "flow_prompt": "The man from the Me avatar, seated at the walnut desk exactly as in the reference image: same studio office, same navy blazer over a crisp white open-collar shirt, same framing (medium shot, straight on, eye level). He looks directly into the lens and says, calm, warm and confident: \"Hi, I'm Prakash Tiwari. I advise CTOs on enterprise architecture, across the whole organization.\" A small natural open-hand gesture on \"whole organization\", then a slight smile. Very slow subtle push-in, steady camera, soft key light from camera left, warm LED-lit walnut shelves and the glass board softly out of focus behind him. Photorealistic, cinematic corporate documentary look, vertical 9:16, no on-screen text, no music.",
+    "video_16x9": "~/Movies/video-pipeline/assets/intro_standard_16x9.mp4",
+    "flow_prompt_16x9": "The man from the Me avatar, seated at the walnut desk exactly as in the reference image: same studio office, same navy blazer over a crisp white open-collar shirt, same framing (medium shot, straight on, eye level). He looks directly into the lens and says, calm, warm and confident: \"Hi, I'm Prakash Tiwari. I advise CTOs on enterprise architecture, across the whole organization.\" A small natural open-hand gesture on \"whole organization\", then a slight smile. Very slow subtle push-in, steady camera, soft key light from camera left, warm LED-lit walnut shelves and the glass board softly out of focus behind him. Photorealistic, cinematic corporate documentary look, horizontal 16:9, no on-screen text, no music."
+  },
+  "linkedin_hashtags": [
+    "#EnterpriseArchitecture",
+    "#SoftwareArchitecture",
+    "#CTO",
+    "#TechLeadership",
+    "#DigitalTransformation"
+  ],
+  "title": "VP, Engineering & Technology || Chief Enterprise Architect",
+  "outro": {
+    "line": "Thanks for watching. If this was useful, subscribe — and you'll find more at prakash-tiwari.com.",
+    "video_16x9": "~/Movies/video-pipeline/assets/outro_standard_16x9.mp4",
+    "video_9x16": "",
+    "flow_prompt_16x9": "The man from the Me avatar, seated at the walnut desk exactly as in the reference image: same studio office, same navy blazer over a crisp white open-collar shirt, same framing (medium shot, straight on, eye level). He looks directly into the lens and says, warm and confident: \"Thanks for watching. If this was useful, subscribe — and you'll find more at prakash-tiwari.com.\" A slight nod and a genuine smile at the end. Steady camera, very slow subtle pull-back, soft key light from camera left, warm LED-lit walnut shelves and the glass board softly out of focus behind him. Photorealistic, cinematic corporate documentary look, horizontal 16:9, no on-screen text, no music."
+  },
+  "flow": {
+    "project": "BASELINE - Consultant Studio (8 angles)",
+    "settings_9x16": "Video · Ingredients · 9:16 · Omni 1.2 Flash · 720p · 8s · x2 → download 1080p",
+    "settings_16x9": "Video · Ingredients · 16:9 · Omni 1.2 Flash · 720p · 8s · x2 → download 1080p",
+    "refs_9x16": "refs/v2",
+    "refs_16x9": "refs/v2-16x9"
+  },
+  "thumb_photo": {
+    "16x9": "refs/v2-16x9/03_closeup.jpg",
+    "vertical": "refs/v2/03_closeup.jpg"
+  }
+}

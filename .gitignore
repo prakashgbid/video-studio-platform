@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+# media, keys and per-production data never live in this repo
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.m4a
+*.jpg
+*.png
+*.drp
+keys.json

@@ -1,0 +1,157 @@
+{
+  "everyday": {
+    "label": "Everyday Explainer",
+    "series": "EVERYDAY EXPLAINER",
+    "who": "General public, customers, students — no tech background",
+    "goal": "Awareness and trust: make a big tech shift feel understandable and relevant to daily life",
+    "business_value": "Reach and audience growth; positions Prakash as the trusted explainer",
+    "voice": "Professional documentary narrator: clear, warm, brisk; explains like a BBC presenter. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "No acronyms or jargon; if a term is unavoidable, explain it in the same sentence",
+      "Open with a relatable everyday moment (shopping on a phone, a delivery at the door)",
+      "One idea per scene; short sentences; analogies from daily life",
+      "Name brands people know only in narration (ChatGPT, Gemini), never as copied interfaces",
+      "End with what it means for the viewer and one simple question"
+    ],
+    "visual_mix": {
+      "broll": 0.7,
+      "graphics": 0.3
+    },
+    "visuals": "Mostly real-life footage and recorded screens that show exactly what is said; simple stats; avoid architecture diagrams",
+    "wpm": 140,
+    "cta": "Ask a simple personal question (Would you let an AI shop for you?)",
+    "platforms": "YouTube + LinkedIn long version; Reels/Shorts/X clips"
+  },
+  "business": {
+    "label": "Business Leaders",
+    "series": "FOR BUSINESS LEADERS",
+    "who": "Heads of operations, marketing, sales, product; non-technical executives",
+    "goal": "Show what changes for customers, revenue and teams, and what to ask their tech team",
+    "business_value": "Consulting leads from business-side sponsors",
+    "voice": "Professional business presenter: confident, clear, brisk. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "Translate every tech idea into a customer, revenue or cost effect",
+      "At most one technical term per scene, explained",
+      "Use real company examples and numbers",
+      "Close with 3 questions to ask your tech team"
+    ],
+    "visual_mix": {
+      "broll": 0.5,
+      "graphics": 0.5
+    },
+    "visuals": "Footage of customers, stores and screens + simple charts and comparisons; at most one simplified diagram",
+    "wpm": 150,
+    "cta": "Ask which part of their customer journey they'd change first",
+    "platforms": "LinkedIn first; YouTube; clips on X and Instagram"
+  },
+  "boardroom": {
+    "label": "Boardroom",
+    "series": "BOARDROOM BRIEF",
+    "who": "CEOs, boards, CFOs, investors and PE operating partners",
+    "goal": "Risk, cost, ROI and the decision to make now — in the time a board slot allows",
+    "business_value": "Executive-level consulting and advisory work",
+    "voice": "Executive presenting a proposal to a board: measured, confident, concise. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "Lead with the business risk or opportunity and its size",
+      "Frame as decisions, trade-offs, cost of waiting",
+      "Numbers with sources; no technical detail beyond one sentence",
+      "Close with the one decision for the next board meeting"
+    ],
+    "visual_mix": {
+      "broll": 0.35,
+      "graphics": 0.65
+    },
+    "visuals": "Stats, decision cards, timelines, a few premium footage shots (boardrooms, markets, customers)",
+    "wpm": 150,
+    "cta": "What decision would you put on your next board agenda?",
+    "platforms": "LinkedIn first; YouTube"
+  },
+  "tech": {
+    "label": "Tech Leaders",
+    "series": null,
+    "who": "CTOs, CIOs, VPs of Engineering, enterprise and solution architects",
+    "goal": "Patterns, target architecture, trade-offs and a roadmap",
+    "business_value": "Architecture consulting; credibility with technical hiring managers",
+    "voice": "IT executive presenting a use case: authoritative, precise, brisk. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "Technical terms are fine; name protocols and patterns",
+      "Show the target architecture and the trade-offs",
+      "Give a phased roadmap"
+    ],
+    "visual_mix": {
+      "broll": 0.2,
+      "graphics": 0.8
+    },
+    "visuals": "Diagrams, flows, comparisons; footage only for context",
+    "wpm": 155,
+    "cta": "Ask how their stack handles the problem today",
+    "platforms": "LinkedIn + YouTube; clips on X"
+  },
+  "founders": {
+    "label": "Founders & SMB",
+    "series": "FOUNDER'S PLAYBOOK",
+    "who": "Startup founders and owners of small and mid-size businesses",
+    "goal": "What to do this quarter with a small team and budget",
+    "business_value": "Most likely consulting clients",
+    "voice": "Experienced advisor: practical, direct, energetic. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "Concrete steps, tools and rough costs",
+      "Small-business examples",
+      "What to do first, what to ignore",
+      "Plain language; one technical term per scene at most"
+    ],
+    "visual_mix": {
+      "broll": 0.5,
+      "graphics": 0.5
+    },
+    "visuals": "Small-business footage (shops, warehouses, laptops), recorded screens, checklists",
+    "wpm": 150,
+    "cta": "Invite them to share their business and situation; offer a free first conversation",
+    "platforms": "LinkedIn, YouTube, Instagram"
+  },
+  "leadership": {
+    "label": "Leadership Lens",
+    "series": "LEADERSHIP LENS",
+    "who": "Future employers: CEOs, boards and executive recruiters; also senior peers",
+    "goal": "Show how Prakash thinks and leads: point of view, transformation stories, team building",
+    "business_value": "Leadership roles; board and advisory seats",
+    "voice": "Leader telling a story: calm authority, first person, sincere. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "First person (I, my teams)",
+      "Story structure: situation, decision, outcome, lesson",
+      "No client names or confidential details",
+      "One clear leadership principle per video"
+    ],
+    "visual_mix": {
+      "broll": 0.45,
+      "graphics": 0.25,
+      "face": 0.3
+    },
+    "visuals": "More @me Flow clips across the 8 angles; office and team footage; quote cards",
+    "wpm": 145,
+    "cta": "Ask leaders how they handle the same situation",
+    "platforms": "LinkedIn first; YouTube"
+  },
+  "academy": {
+    "label": "Architect's Academy",
+    "series": "ARCHITECT'S ACADEMY",
+    "who": "Engineers and developers growing into architect roles",
+    "goal": "Teach one concept properly with worked examples",
+    "business_value": "YouTube audience growth and community; talent pipeline",
+    "voice": "Senior architect teaching: clear, patient, structured. Delivery comes from the brand voice settings, not from tags.",
+    "writing": [
+      "Define each term, then use it",
+      "Worked example from a familiar app",
+      "Common mistakes and how to avoid them",
+      "Homework or next step"
+    ],
+    "visual_mix": {
+      "broll": 0.25,
+      "graphics": 0.75
+    },
+    "visuals": "Step-by-step diagrams, timelines, recorded screens of tools; whiteboard-style",
+    "wpm": 150,
+    "cta": "Ask viewers to try it and share their design",
+    "platforms": "YouTube first; LinkedIn; clips on X"
+  }
+}
