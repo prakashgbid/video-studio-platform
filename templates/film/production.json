@@ -1,0 +1,20 @@
+{
+ "name": "{{TITLE}}",
+ "code": "{{CODE}}",
+ "format": "{{FORMAT}}",
+ "fps": 24,
+ "size": [1920, 1080],
+ "master_size": [3840, 2160],
+ "label": "ANIMATIC",
+ "output": "{{CODE}}_cut.mp4",
+ "cast": "cast/cast.json",
+ "reuse_gate": "strict",
+ "standards": {
+  "profile": "family",
+  "teaching_speakers": [],
+  "notes": "No bad words, no bad behaviour, modest clothing. Teaching lines only from teaching_speakers."
+ },
+ "audio": {"dialogue": [], "fx": [], "music": []},
+ "mix": {"dialogue_lufs": -16, "music_duck_db": -14, "fx_db": -6, "programme_lufs": -16},
+ "shots": []
+}

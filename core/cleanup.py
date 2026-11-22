@@ -9,6 +9,11 @@ Policy (catalog/keep_policy.json overrides the defaults below):
   * Build intermediates: video/audio under a production's build/ folder that is older than that production's
     final output can be rebuilt, so they go.
   * Exact duplicates: an identical copy that nothing references goes; the referenced or source copy stays.
+  * Unused generated takes (Flow, ElevenLabs, GPU ...) that nothing references and nobody approved are kept
+    `unused_take_days` (90) days; then the file goes and its catalog record stays: prompt, model, generation id
+    and platform link, so it can be found again or re-downloaded from the platform.
+  * Approved masters (`catalog.py approve <file>`) are kept forever.
+  * Old cleanup plans: only the last 3 are kept.
   * Tests (_tests/) and archive (_archive/) are only touched with --tests / --archive.
 
 Never deleted: anything a production references (assets.json, production.json, scene.json, meta.json ...),
@@ -27,7 +32,7 @@ import catalog as C
 POLICY = {"keep_revisions": 2, "min_age_hours": 24, "media_kinds": ["video", "audio", "image"],
           "protect_prefixes": ["00 Platform/", "01 Brand/", "02 Libraries/_catalog/"],
           "protect_brand_kit": True,
-          "max_delete_gb_without_confirm": 5}
+          "max_delete_gb_without_confirm": 5, "unused_take_days": 90, "keep_plans": 3}
 VER = re.compile(r"(?:[_\-\. ](?:v(?P<v>\d+)|rev(?P<r>\d+)|take[_\-]?(?P<t>[a-z])|(?P<d>\d{8})(?:[_\-]?\d{4,6})?|old|copy|\((?P<c>\d+)\)))+$", re.I)
 
 def policy():
@@ -66,6 +71,7 @@ def plan(tests=False, archive=False):
         if any(rx.search(os.path.basename(r)) for rx in refs) and x["role"] not in ("derived", "test", "preview"):
             return "loaded by platform code"
         if (x.get("source") or {}).get("locked"): return "locked"
+        if x.get("keep") == "master": return "approved master (kept forever)"
         if any(r.startswith(p) or f"/{p}" in f"/{r}" for p in P["protect_prefixes"]): return "protected folder"
         if x["kind"] == "model": return "identity model"
         if now - os.path.getmtime(os.path.join(C.STUDIO, r)) < P["min_age_hours"] * 3600: return "changed in the last 24h"
@@ -130,9 +136,22 @@ def plan(tests=False, archive=False):
         elif twin in act and (same_folder or x["role"] in ("derived", "test", "preview")):
             delete[r] = f"identical copy of {twin}"
         else: kept.setdefault(r, "identical copy in another source folder: kept (may be loaded by name)")
+    # 4. unused generated takes past their keep window: file goes, record + platform link stay
+    days = P.get("unused_take_days", 90)
+    for r, x in media.items():
+        if r in delete or r in keepers or x["role"] != "source": continue
+        origin = (x.get("source") or {}).get("origin") or ""
+        if not any(origin.startswith(o) for o in C.GENERATED): continue
+        if now - os.path.getmtime(os.path.join(C.STUDIO, r)) < days * 86400: continue
+        why = protected(r, x)
+        if why: kept.setdefault(r, why); continue
+        link = (x.get("source") or {}).get("platform_url") or (x.get("source") or {}).get("genid")
+        delete[r] = f"unused take older than {days} days (record kept{'; platform link ' + str(link) if link else ''})"
     items = [{"path": r, "size": act[r]["size"], "sha256": act[r]["sha256"], "reason": why} for r, why in sorted(delete.items())]
     total = sum(i["size"] for i in items)
     stamp = time.strftime("%Y%m%d-%H%M%S")
+    old_plans = sorted(f for f in os.listdir(C.CAT) if re.fullmatch(r"cleanup_plan_\d{8}-\d{6}\.json", f))
+    for f in old_plans[:max(0, len(old_plans) - P.get("keep_plans", 3) + 1)]: os.remove(os.path.join(C.CAT, f))
     pf = os.path.join(C.CAT, f"cleanup_plan_{stamp}.json")
     json.dump({"created": stamp, "policy": P, "tests": tests, "archive": archive, "total_bytes": total, "delete": items,
                "kept_with_reason": dict(sorted(kept.items()))}, open(pf, "w"), indent=1)

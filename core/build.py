@@ -290,6 +290,13 @@ class Build:
                 print(f"{s['id']:>5} {t:7.2f}s {s['dur']:5.2f}s {s['kind']:8} {'cached' if cached else 'WILL RENDER'}")
             return
         t0 = time.time(); segs = []
+        # reuse-first gate (plan 1.15): generated media must have been registered after a catalog `need` search
+        import catalog as C
+        bad = C.gate(self.root)
+        if bad:
+            if self.P.get("reuse_gate", "warn") == "strict":
+                print(f"REUSE GATE: {len(bad)} unregistered generation(s). Register each with `catalog.py register` (after `need`)."); sys.exit(2)
+            print(f"reuse gate warning: {len(bad)} unregistered generation(s) (production.json reuse_gate=warn)")
         for s, _ in tl:
             if only and s["id"] not in only:
                 key = self.shot_key(s); p = f"{self.cache}/{s['id']}.{key}.mp4"
@@ -314,6 +321,9 @@ class Build:
             p = f"{self.cache}/{f}"
             if p not in used and not f.endswith(".json"): freed += os.path.getsize(p); os.remove(p)
         if freed: print(f"  pruned superseded cache: {freed/1e6:.0f} MB")
+        try:   # auto-register what this build made (catalog record per output; fast, this production only)
+            C.scan(embed=False, quiet=True, prefix=C.rel(self.root) + os.sep); print("  catalog: production re-indexed")
+        except Exception as e: print("  catalog re-index skipped:", e)
         if self.qc:
             print("audio QC (dialogue clarity, loudness):")
             rc = subprocess.run([PY, f"{HERE}/audio_qc.py", self.root]).returncode

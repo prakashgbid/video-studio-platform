@@ -1,0 +1,4 @@
+{
+ "members": {},
+ "note": "One entry per person: {\"minor\": bool, \"height_cm\": n, \"voice\": \"elevenlabs:<id> | local:<model>\", \"identity_model\": \"_model/<file>\", \"costume\": \"...\"}. Minors: likeness and voice only with local open tools; never uploaded to hosted services."
+}

@@ -1,0 +1,11 @@
+{
+ "family": {
+  "fail_words": ["damn", "dammit", "hell", "crap", "shit", "fuck", "bitch", "bastard", "ass", "arse", "piss", "bloody", "screw you", "sucks", "freaking", "frigging", "oh my god", "omg", "jeez", "geez"],
+  "fail_insults": ["stupid", "idiot", "dumb", "moron", "loser", "shut up", "fatso", "ugly", "useless", "pathetic", "nerd", "baby" ],
+  "disrespect": ["whatever", "rolls eyes", "rolls his eyes", "rolls her eyes", "talks back", "you don't know anything", "leave me alone", "i hate you", "slams the door", "ignores dad", "ignores mom", "ignores mum", "mocks"],
+  "clothing": ["bikini", "shirtless", "bare-chested", "crop top", "low-cut", "revealing", "skimpy", "lingerie", "swimsuit", "mini skirt", "miniskirt", "see-through", "tight dress", "cleavage"],
+  "review_words": ["lie", "lies", "liar", "lying", "steal", "stole", "cheat", "hit", "punch", "kick", "kill", "blood", "fight", "weapon", "sword", "gun", "fool", "scream", "yell", "afraid", "scared", "kiss"],
+  "teaching_cues": ["veda", "upanishad", "gita", "purana", "ramayana", "mahabharata", "dharma", "karma", "yoga", "pranayama", "shloka", "mantra", "science", "physics", "biology", "medicine", "ayurveda", "astronomy", "algorithm", "robot", "history", "lesson", "teaches", "remember,"]
+ },
+ "note": "fail_* and clothing block approval; review_words need a human look (martial arts, a villain, a toddler's 'you lie' game can be fine). Waive one line with a trailing <!-- ok: reason -->. 'baby' is an insult only when said to a person; waive endearments."
+}

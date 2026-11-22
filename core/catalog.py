@@ -5,6 +5,10 @@
     python catalog.py like <file>           # visually similar assets
     python catalog.py need "<what you need>" --kind video [--for <production>]
                                             # reuse-first gate: search, log, and say REUSE / CHECK STOCK / GENERATE
+    python catalog.py register <file> --ticket n_xxxxxx --origin "Google Flow" --model veo-3 --prompt "..." [--genid ID] [--cost 0.40]
+                                            # record a NEW generation; refused without a ticket from `need`
+    python catalog.py approve <file>        # mark an approved master (kept forever by the keep policy)
+    python catalog.py gate <production>     # every generated asset the production uses must be registered
     python catalog.py dupes                 # identical files (same checksum)
     python catalog.py show <id|path>        # one record
     python catalog.py stats
@@ -24,6 +28,10 @@ CAT = os.path.join(STUDIO, "02 Libraries", "_catalog")
 RECORDS = os.path.join(CAT, "catalog.jsonl")
 SEARCHES = os.path.join(CAT, "searches.jsonl")
 DELETIONS = os.path.join(CAT, "deletions.jsonl")
+GENS = os.path.join(CAT, "generations.jsonl")        # one line per registered generation (by checksum)
+APPROVALS = os.path.join(CAT, "approvals.jsonl")     # approved masters (by checksum)
+GATE_START = "2026-11-22"                             # generated media older than this is grandfathered
+GENERATED = ("Google Flow", "ElevenLabs", "GPU worker", "Marble", "Kokoro")
 RUNTIME = os.environ.get("VIDEO_RUNTIME", os.path.expanduser("~/VideoStudioRuntime"))
 RT = os.path.join(RUNTIME, "catalog"); os.makedirs(RT, exist_ok=True); os.makedirs(CAT, exist_ok=True)
 HASHCACHE = os.path.join(RT, "hashcache.json")
@@ -230,10 +238,21 @@ def save(recs):
         for k in sorted(recs): f.write(json.dumps(recs[k], ensure_ascii=False, sort_keys=True) + "\n")
     os.replace(tmp, RECORDS)
 
-def scan(embed=True, quiet=False):
+def jsonl(p):
+    if not os.path.exists(p): return []
+    return [json.loads(l) for l in open(p) if l.strip()]
+
+def append(p, entry):
+    with open(p, "a") as f: f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+def scan(embed=True, quiet=False, prefix=None):
+    """prefix: rescan only that studio-relative folder (fast, used after every build); other records are untouched."""
     t0 = time.time(); old = load()
     hc = json.load(open(HASHCACHE)) if os.path.exists(HASHCACHE) else {}
-    paths = [p for p in walk()]
+    paths = [p for p in walk() if not prefix or rel(p).startswith(prefix)]
+    gens = {}
+    for g in jsonl(GENS): gens[g["sha256"]] = g
+    approved = {a["sha256"]: a for a in jsonl(APPROVALS)}
     links = registries()
     def one(p):
         r = rel(p); st = os.stat(p); key = f"{r}|{st.st_size}|{int(st.st_mtime)}"
@@ -264,6 +283,11 @@ def scan(embed=True, quiet=False):
             pb = prompt_beside(p)
             if pb: info["prompt"] = pb
         rec["source"] = {k2: v for k2, v in info.items() if v not in (None, "")}
+        g = gens.get(h)
+        if g:
+            rec["source"].update({k2: g[k2] for k2 in ("origin", "model", "prompt", "genid", "cost", "credits", "ticket", "platform_url") if g.get(k2) not in (None, "")})
+            rec["registered"] = g["time"]
+        if h in approved: rec["keep"] = "master"; rec["approved"] = approved[h]["time"]
         extra = sum([l.get("tags", []) for l in L], [])
         rec["tags"] = tags_of(r, extra)
         desc = " ".join(x for x in (info.get("line"), info.get("prompt")) if x)
@@ -276,6 +300,7 @@ def scan(embed=True, quiet=False):
             recs[r] = rec; hc[key] = h
     # files that vanished since the last scan: keep the record, marked missing/deleted
     for r, rec in old.items():
+        if prefix and not r.startswith(prefix) and r not in recs: recs[r] = rec; continue
         if r not in recs:
             if rec.get("status") not in ("deleted", "missing"): rec["status"] = "missing"
             recs[r] = rec
@@ -361,12 +386,65 @@ def need(q, kind=None, production=None):
     hits = search(q, kind, top=5, quiet=True)
     best = hits[0][0] if hits else 0.0
     verdict = "REUSE" if best >= 0.75 else ("REVIEW CANDIDATES" if best >= 0.45 else "CHECK STOCK, THEN GENERATE")
-    entry = {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "query": q, "kind": kind, "production": production,
+    ticket = "n_" + hashlib.sha1(f"{time.time()}{q}".encode()).hexdigest()[:6]
+    entry = {"ticket": ticket, "time": time.strftime("%Y-%m-%dT%H:%M:%S"), "query": q, "kind": kind, "production": production,
              "verdict": verdict, "best": best, "candidates": [r["path"] for s, _, _, r in hits]}
     with open(SEARCHES, "a") as f: f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    print(f"{verdict}  (best match {best:.2f})")
+    print(f"{verdict}  (best match {best:.2f})   ticket {ticket}")
     for s, kw, vis, r in hits: print(f"  {s:.2f}  {r['path']}")
     return entry
+
+def register(path, ticket, origin, model=None, prompt=None, genid=None, cost=None, credits=None, url=None, override=None):
+    """Record a new generation. Refused unless a reuse-first search (`need`) ran first and did not say REUSE."""
+    full = os.path.realpath(path)
+    if not os.path.exists(full): sys.exit(f"no such file: {path}")
+    T = {e.get("ticket"): e for e in jsonl(SEARCHES)}
+    t = T.get(ticket)
+    if not t: sys.exit(f"REFUSED: ticket {ticket!r} not found. Run `catalog.py need \"<what you need>\" --kind ... --for ...` first.")
+    age = time.time() - time.mktime(time.strptime(t["time"], "%Y-%m-%dT%H:%M:%S"))
+    if age > 14 * 86400: sys.exit(f"REFUSED: ticket {ticket} is {age/86400:.0f} days old; search again, the library has changed.")
+    if t["verdict"] == "REUSE" and not override:
+        sys.exit(f"REFUSED: that search found a reusable asset ({t['candidates'][0]}). Use it, or pass --override \"<why it won't do>\".")
+    h = sha256(full)
+    g = {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "sha256": h, "path": rel(full), "ticket": ticket, "query": t["query"],
+         "production": t.get("production"), "origin": origin, "model": model, "prompt": prompt, "genid": genid,
+         "cost": cost, "credits": credits, "platform_url": url, "override": override}
+    append(GENS, {k: v for k, v in g.items() if v not in (None, "")})
+    scan(embed=False, quiet=True, prefix=os.path.dirname(rel(full)) + os.sep)
+    print(f"registered {rel(full)}  ({origin}{', ' + model if model else ''})")
+
+def approve(path, note=None):
+    full = os.path.realpath(path)
+    if not os.path.exists(full): sys.exit(f"no such file: {path}")
+    append(APPROVALS, {"time": time.strftime("%Y-%m-%dT%H:%M:%S"), "sha256": sha256(full), "path": rel(full), "note": note})
+    scan(embed=False, quiet=True, prefix=os.path.dirname(rel(full)) + os.sep)
+    print(f"approved master: {rel(full)} (kept forever)")
+
+def gate(root, quiet=False):
+    """Every generated media file a production uses must be registered (made after a reuse-first search).
+    Returns the list of violations; files dated before GATE_START are grandfathered."""
+    root = os.path.realpath(root)
+    try: A = json.load(open(os.path.join(root, "assets.json")))
+    except FileNotFoundError: return []
+    recs = load(); by_sha = {}
+    for r in recs.values(): by_sha.setdefault(r.get("sha256"), r)
+    regs = {g["sha256"] for g in jsonl(GENS)}
+    bad = []
+    for aid, a in A.items():
+        p = a.get("path") if isinstance(a, dict) else None
+        if not p: continue
+        full = p if os.path.isabs(p) else os.path.normpath(os.path.join(root, p))
+        full = os.path.realpath(os.path.expanduser(full))
+        if not os.path.isfile(full) or kind_of(full) not in MEDIA: continue
+        r = rel(full); rec = recs.get(r)
+        origin = (rec or {}).get("source", {}).get("origin") or origin_guess(r, kind_of(full)) or ""
+        if not any(origin.startswith(o) for o in GENERATED): continue
+        if time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(full))) < GATE_START: continue
+        h = (rec or {}).get("sha256") or sha256(full)
+        if h not in regs: bad.append((aid, r, origin))
+    if not quiet:
+        for aid, r, o in bad: print(f"  UNREGISTERED GENERATION  {aid}: {r}  ({o})")
+    return bad
 
 def main():
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest="cmd", required=True)
@@ -374,6 +452,11 @@ def main():
     s = sp.add_parser("search"); s.add_argument("q"); s.add_argument("--kind"); s.add_argument("--top", type=int, default=10); s.add_argument("--all", action="store_true")
     s = sp.add_parser("like"); s.add_argument("path"); s.add_argument("--top", type=int, default=10)
     s = sp.add_parser("need"); s.add_argument("q"); s.add_argument("--kind"); s.add_argument("--for", dest="prod")
+    s = sp.add_parser("register"); s.add_argument("path"); s.add_argument("--ticket", required=True); s.add_argument("--origin", required=True)
+    for o in ("model", "prompt", "genid", "url", "override"): s.add_argument("--" + o)
+    s.add_argument("--cost", type=float); s.add_argument("--credits", type=float)
+    s = sp.add_parser("approve"); s.add_argument("path"); s.add_argument("--note")
+    s = sp.add_parser("gate"); s.add_argument("root")
     sp.add_parser("dupes"); sp.add_parser("stats")
     s = sp.add_parser("show"); s.add_argument("x")
     a = ap.parse_args()
@@ -381,6 +464,10 @@ def main():
     elif a.cmd == "search": search(a.q, a.kind, a.top, include_derived=a.all)
     elif a.cmd == "like": like(a.path, a.top)
     elif a.cmd == "need": need(a.q, a.kind, a.prod)
+    elif a.cmd == "register": register(a.path, a.ticket, a.origin, a.model, a.prompt, a.genid, a.cost, a.credits, a.url, a.override)
+    elif a.cmd == "approve": approve(a.path, a.note)
+    elif a.cmd == "gate":
+        bad = gate(a.root); print("gate: OK" if not bad else f"gate: {len(bad)} unregistered generation(s)"); sys.exit(1 if bad else 0)
     elif a.cmd == "dupes":
         recs = load(); g = {}
         for r in recs.values():
