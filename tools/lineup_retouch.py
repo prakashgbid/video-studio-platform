@@ -5,7 +5,7 @@
 
 spec.json: {"points": [[x,y], ...],          # the line-up edge as a polyline (straight segments)
             "hair": [x,y],                    # any point on the hair/beard side
-            "radius": 9,                      # rounded corners, px
+            "radius": 9,                      # rounded corners, px (or "tangent": visible curve length per edge, px)
             "bands": [12, 6, 9],              # per segment: how far either side of the edge is rebuilt
             "soft": 3.5,                      # edge softness, px (natural beard edge, not a drawn line)
             "tips": 1.6,                      # hair-tip irregularity along the edge, px
@@ -16,14 +16,17 @@ inside on the hair side, so texture stays real; only the outline changes. Works 
 import sys, json, math
 import numpy as np, cv2
 
-def rounded_path(pts, r):
+def rounded_path(pts, r, tangent=None):
     pts = [np.array(p, np.float64) for p in pts]; out = [pts[0]]
     for i in range(1, len(pts) - 1):
         P, V, N = pts[i - 1], pts[i], pts[i + 1]
         u1 = (V - P) / np.linalg.norm(V - P); u2 = (N - V) / np.linalg.norm(N - V)
         cosang = np.clip(np.dot(-u1, u2), -1, 1); theta = math.acos(cosang)          # interior angle
         if theta < 1e-3 or abs(theta - math.pi) < 1e-3: out.append(V); continue
-        t = r / math.tan(theta / 2); T1 = V - u1 * t; T2 = V + u2 * t
+        if tangent:                                   # round by visible curve length along each edge
+            t = tangent; r = t * math.tan(theta / 2)
+        else: t = r / math.tan(theta / 2)
+        T1 = V - u1 * t; T2 = V + u2 * t
         bis = (-u1 + u2); bis /= np.linalg.norm(bis); C = V + bis * (r / math.sin(theta / 2))
         a1 = math.atan2(*(T1 - C)[::-1]); a2 = math.atan2(*(T2 - C)[::-1])
         da = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
@@ -37,7 +40,7 @@ def main():
     x0, y0 = int(max(0, pts[:, 0].min() - pad)), int(max(0, pts[:, 1].min() - pad))
     x1, y1 = int(min(W, pts[:, 0].max() + pad)), int(min(H, pts[:, 1].max() + pad))
     crop = img[y0:y1, x0:x1]; h, w = crop.shape[:2]
-    path = rounded_path(S["points"], S.get("radius", 9)) - [x0, y0]
+    path = rounded_path(S["points"], S.get("radius", 9), S.get("tangent")) - [x0, y0]
     hp = np.array(S["hair"], np.float64) - [x0, y0]
     # hair region: polygon closed on the hair side, far outside the crop; supersampled for a clean edge
     a, b = path[0], path[-1]; d0 = path[1] - a; d1 = b - path[-2]
@@ -67,7 +70,7 @@ def main():
         m = dist < nearest; nearest[m] = dist[m]; bandw[m] = S["bands"][i]
     bandw = cv2.GaussianBlur(bandw, (0, 0), 8)          # no width jump at corners between segments
     inband = (np.abs(sd) < bandw) & (nearest < bandw + 4)
-    k_s = np.where(sd <= 0, bandw + 1, sd + bandw + 1); k_h = np.where(sd >= 0, bandw + 1, -sd + bandw + 1)
+    g = S.get("sample_gap", 1); k_s = np.where(sd <= 0, bandw + g, sd + bandw + g); k_h = np.where(sd >= 0, bandw + g, -sd + bandw + g)
     Sk = cv2.remap(crop, xx - nx * k_s, yy - ny * k_s, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
     Hr = cv2.remap(crop, xx + nx * k_h, yy + ny * k_h, cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
     # natural edge: soft transition + hair-tip irregularity (fine streaks along the normal direction)
