@@ -5,6 +5,7 @@
 
 spec.json: {"points": [[x,y], ...],          # the line-up edge as a polyline (straight segments)
             "hair": [x,y],                    # any point on the hair/beard side
+            "close": [[x,y], ...],            # optional: points closing the edge into the SKIN area (when the edge turns back)
             "radius": 9,                      # rounded corners, px (or "tangent": visible curve length per edge, px)
             "bands": [12, 6, 9],              # per segment: how far either side of the edge is rebuilt
             "soft": 3.5,                      # edge softness, px (natural beard edge, not a drawn line)
@@ -50,9 +51,12 @@ def main():
     cen = path.mean(0); push = (hp - cen); push = push / (np.linalg.norm(push) + 1e-9) * big
     poly = np.vstack([ext_a, path, ext_b, ext_b + push, ext_a + push])
     SS = 4; mask = np.zeros((h * SS, w * SS), np.uint8)
+    if S.get("close"):      # explicit SKIN polygon: the edge path closed through the skin side (needed when the edge turns back)
+        poly = np.vstack([path, np.array(S["close"], np.float64) - [x0, y0]])
     cv2.fillPoly(mask, [np.round(poly * SS).astype(np.int32)], 255, lineType=cv2.LINE_AA)
     hair = cv2.resize(mask, (w, h), interpolation=cv2.INTER_AREA).astype(np.float32) / 255
-    if hair[int(hp[1]), int(hp[0])] < 0.5: hair = 1 - hair
+    if S.get("close"): hair = 1 - hair
+    elif hair[int(hp[1]), int(hp[0])] < 0.5: hair = 1 - hair
     hb = (hair > 0.5).astype(np.uint8)
     din = cv2.distanceTransform(hb, cv2.DIST_L2, 5); dout = cv2.distanceTransform(1 - hb, cv2.DIST_L2, 5)
     sd = din - dout                                                     # >0 inside hair
