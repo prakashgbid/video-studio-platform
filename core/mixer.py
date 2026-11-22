@@ -83,7 +83,10 @@ def mix(stems, out_wav, bg_wav, params=None):
     js = json.loads(re.findall(r"\{[^{}]+\}", meas)[-1])
     lf = (f"loudnorm=I={p['lufs']}:TP={p['true_peak']}:LRA=11:measured_I={js['input_i']}:measured_TP={js['input_tp']}:"
           f"measured_LRA={js['input_lra']}:measured_thresh={js['input_thresh']}:offset={js['target_offset']}:linear=true")
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-af", f"{lf},alimiter=limit=0.78:level=false", "-ar", str(SR), out_wav], check=True)
+    if "inf" in str(js["input_i"]):   # silent programme (animatic with no sound yet): nothing to normalise
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-ar", str(SR), out_wav], check=True)
+    else:
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", raw, "-af", f"{lf},alimiter=limit=0.78:level=false", "-ar", str(SR), out_wav], check=True)
     import os; os.remove(raw)
     ducked = float(np.mean(gm[sp] < 0.5)) if sp.any() else 0.0
     return {"speech_seconds": round(float(sp.sum()) * hop_s, 1), "music_ducked_share": round(ducked, 2),

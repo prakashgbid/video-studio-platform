@@ -151,15 +151,31 @@ class Build:
         ids = [v for k, v in s.items() if k in ("asset", "plate") and v and isinstance(v, str)] + [l["asset"] for l in s.get("layers", [])] + list(s.get("assets", [])) + [it["asset"] for it in s.get("items", [])]
         return ids
 
+    def film_src(self, s):
+        """kind=film: the best existing stage output (boards png ... upscale mp4); stages are run by filmstages.py, never here."""
+        if not hasattr(self, "_film"):
+            import filmstages; self._film = filmstages.Film(self.root)
+        p, st = self._film.best(s)
+        if not p: raise FileNotFoundError(f"{s['id']}: no stage output yet; run filmstages.py run {self.root} --shots {s['id']}")
+        return p
+
     def shot_key(self, s):
         files = {i: fid(self.path_of(i)) for i in self.shot_inputs(s)}
+        if s["kind"] == "film": files["_film"] = fid(self.film_src(s))
         return sha({"s": s, "files": files, "fps": self.fps, "size": [self.W, self.H], "label": self.label, "v": ENGINE_VERSION})
 
     def render_shot(self, s):
         key = self.shot_key(s); dst = f"{self.cache}/{s['id']}.{key}.mp4"
         if os.path.exists(dst) and s["id"] not in self.force: self.log.append(("reuse", s["id"])); return dst
         d = s["dur"]; n = int(round(d * self.fps)); W, H, F = self.W, self.H, self.fps; k = s["kind"]
-        if k == "still":
+        film = self.film_src(s) if k == "film" else None
+        if film and film.endswith(".png"):
+            ins = ["-loop", "1", "-framerate", str(F), "-i", film]
+            fc = f"[0]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={F},trim=duration={d}[base]"
+        elif film:
+            ins = ["-stream_loop", "-1", "-i", film]
+            fc = f"[0]scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={F},trim=duration={d},setpts=PTS-STARTPTS[base]"
+        elif k == "still":
             ins = ["-i", self.path_of(s["asset"])]
             z = s.get("zoom", 0.0006)
             fc = f"[0]scale={int(W*1.25)}:-2,zoompan=z='1.0+{z}*on':d={n}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s={W}x{H}:fps={F}[base]"
@@ -229,6 +245,9 @@ class Build:
                    "total": total, "v": AUDIO_VERSION})
         dst = f"{self.cache}/stem_{track}.{key}.wav"
         if os.path.exists(dst) and track not in self.force: self.log.append(("reuse", f"stem:{track}")); return dst
+        if not cues:   # no cues yet on this track (early animatic): a silent stem of the right length
+            run(["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"anullsrc=r=48000:cl=stereo", "-t", f"{total}", dst + ".tmp.wav"])
+            os.replace(dst + ".tmp.wav", dst); self.log.append(("build", f"stem:{track}")); return dst
         ins, fl = [], []
         for i, c in enumerate(cues):
             ins += ["-i", self.path_of(c["asset"])]; ms = int(c["t"] * 1000)

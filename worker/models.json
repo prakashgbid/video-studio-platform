@@ -1,0 +1,7 @@
+{
+ "_note": "Fetched onto the network volume by fetch_models.py. Every entry names its licence-register key; the fetch refuses anything not cleared. Exact file names are confirmed against the repo listing at fetch time.",
+ "wan2.2-i2v-a14b": {"repo": "Wan-AI/Wan2.2-I2V-A14B", "dest": "ComfyUI/models/diffusion_models/wan2.2-i2v"},
+ "wan2.2-t2v-a14b": {"repo": "Wan-AI/Wan2.2-T2V-A14B", "dest": "ComfyUI/models/diffusion_models/wan2.2-t2v"},
+ "wan2.2-ti2v-5b":  {"repo": "Wan-AI/Wan2.2-TI2V-5B", "dest": "ComfyUI/models/diffusion_models/wan2.2-ti2v-5b"},
+ "wan-animate-2-14b": {"repo": "Wan-AI/Wan-Animate-2-14B", "dest": "ComfyUI/models/diffusion_models/wan-animate-2"}
+}

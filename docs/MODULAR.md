@@ -120,3 +120,25 @@ rebuilt at any time.
   cast and models), and a cross-folder duplicate is only removed when it is a build, test or preview copy.
 - Only folders that the apply itself emptied (and that are `_old*` revision folders) are removed; prepared empty
   folders such as a new film's scaffold are never touched.
+
+## Film pipeline (fully digital production)
+
+Start a film: `core/new_film.py F03 "Title" --format feature` (template in `templates/film`). Then:
+
+| Step | Command | What it does |
+|---|---|---|
+| Pre-flight | `preflight.py --for film` | tools, venv, disk, keys (600, outside Drive), GPU cap, licences, catalog, Resolve, git |
+| Script check | `standards.py <film>` | family standards: words, insults, disrespect, clothing, teaching speakers; also runs in every build |
+| Reuse first | `catalog.py need "<what>" --kind video --for <film>` → generate → `catalog.py register <file> --ticket ...` | no generation without a logged search; build gate is strict for films |
+| Licences | `licences.py check <model>` | every model must be cleared in `02 Libraries/_catalog/model_licences.json` |
+| Shot stages | `filmstages.py run <film> [--shots] [--stage] [--backend]` | boards → layout → photoreal → facelock → upscale; fingerprinted, versioned `shots/<stage>/<shot>_vN`, cost ledger |
+| Review | `contact.py <film>` | one contact sheet per scene: best frame per shot, stage, version, out-of-date marks |
+| Cut | `build.py <film>` | `kind: film` shots use their best stage output; only changed shots re-render |
+| Reels | `reelcut.py cut <film>` / `guide` | teaching moments → 9:16 at −14 LUFS + clean dialogue wav; framing-guide preview |
+| Resolve | `resolve_film.py <film>` | new dated project: V1 picture … V5 reference; dialogue/FX/music lanes + stems; .drp backup |
+| GPU | `gpu.py start/wait/stop/idle-watch/cost` | RunPod v2 API, studio-* pods only, hourly and monthly caps, SSH-only exposure |
+| GPU jobs | `jobs.py bootstrap/run/wipe` | ComfyUI over an SSH tunnel; `--minor` jobs end with a verified wipe |
+| Worker | `worker/` | setup on the network volume, pinned by `lock.json`; cleared models only |
+
+Rules the code enforces: children's shots never use a hosted backend; blocked licences are refused; the build never
+generates media; every GPU minute and stage run is logged.
