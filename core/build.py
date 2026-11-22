@@ -297,6 +297,11 @@ class Build:
             if self.P.get("reuse_gate", "warn") == "strict":
                 print(f"REUSE GATE: {len(bad)} unregistered generation(s). Register each with `catalog.py register` (after `need`)."); sys.exit(2)
             print(f"reuse gate warning: {len(bad)} unregistered generation(s) (production.json reuse_gate=warn)")
+        # content standards (plan 1.10): a production with a standards profile and a script must pass before building
+        if self.P.get("standards") and os.path.isdir(os.path.join(self.root, "story")):
+            if subprocess.run([PY, f"{HERE}/standards.py", self.root], stdout=subprocess.DEVNULL).returncode:
+                print("CONTENT STANDARDS FAILED: see docs/standards_report.md"); sys.exit(3)
+            print("content standards: pass")
         for s, _ in tl:
             if only and s["id"] not in only:
                 key = self.shot_key(s); p = f"{self.cache}/{s['id']}.{key}.mp4"
